@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { authOptions } from "@/lib/auth";
-
+import DeleteButton from "@/components/DeleteButton";
 
 type Post = {
   id: string;
@@ -19,14 +19,12 @@ type Post = {
 };
 
 export default async function DashboardPage() {
-const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptions);
 
-  // Redirect to login if not logged in
   if (!session?.user?.email) {
     redirect("/login");
   }
 
-  // Get user's posts from database
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
     include: {
@@ -137,7 +135,6 @@ const session = await getServerSession(authOptions);
   );
 }
 
-// Post row component
 function PostRow({ post }: { post: Post }) {
   const isDraft = post.status === "draft";
 
@@ -189,26 +186,5 @@ function PostRow({ post }: { post: Post }) {
         <DeleteButton postId={post.id} />
       </div>
     </div>
-  );
-}
-
-// Delete button — needs to be a client component
-function DeleteButton({ postId }: { postId: string }) {
-  return (
-    <form action={`/api/posts/${postId}`} method="POST">
-      <input type="hidden" name="_method" value="DELETE" />
-      <button
-        type="submit"
-        className="text-xs px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
-        onClick={async (e) => {
-          e.preventDefault();
-          if (!confirm("Delete this post?")) return;
-          await fetch(`/api/posts/${postId}`, { method: "DELETE" });
-          window.location.reload();
-        }}
-      >
-        Delete
-      </button>
-    </form>
   );
 }
