@@ -3,10 +3,13 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest } from "next/server";
 
+// DELETE post
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return new Response("Unauthorized", { status: 401 });
@@ -16,24 +19,32 @@ export async function DELETE(
     where: { email: session.user.email },
   });
 
-  if (!user) return new Response("User not found", { status: 404 });
+  if (!user) {
+    return new Response("User not found", { status: 404 });
+  }
 
   const post = await prisma.post.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
 
   if (!post || post.authorId !== user.id) {
     return new Response("Forbidden", { status: 403 });
   }
 
-  await prisma.post.delete({ where: { id: params.id } });
+  await prisma.post.delete({
+    where: { id },
+  });
+
   return Response.json({ success: true });
 }
 
+// UPDATE post
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return new Response("Unauthorized", { status: 401 });
@@ -43,10 +54,12 @@ export async function PATCH(
     where: { email: session.user.email },
   });
 
-  if (!user) return new Response("User not found", { status: 404 });
+  if (!user) {
+    return new Response("User not found", { status: 404 });
+  }
 
   const post = await prisma.post.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
 
   if (!post || post.authorId !== user.id) {
@@ -55,10 +68,10 @@ export async function PATCH(
 
   const data = await req.json();
 
-  const updated = await prisma.post.update({
-    where: { id: params.id },
+  const updatedPost = await prisma.post.update({
+    where: { id },
     data,
   });
 
-  return Response.json(updated);
+  return Response.json(updatedPost);
 }
