@@ -7,13 +7,38 @@ interface Props {
   params: { username: string };
 }
 
+// ✅ Define proper types
+type Post = {
+  id: string;
+  slug: string;
+  title: string;
+  coverImage: string | null;
+  createdAt: Date;
+};
+
+type UserWithPosts = {
+  name: string | null;
+  username: string | null;
+  image: string | null;
+  bio: string | null;
+  posts: Post[];
+};
+
 export default async function WriterPage({ params }: Props) {
-  const user = await prisma.user.findUnique({
+  // ✅ Type the Prisma result
+  const user: UserWithPosts | null = await prisma.user.findUnique({
     where: { username: params.username },
     include: {
       posts: {
         where: { status: "published" },
         orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          coverImage: true,
+          createdAt: true,
+        },
       },
     },
   });
@@ -67,7 +92,8 @@ export default async function WriterPage({ params }: Props) {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {user.posts.map((post) => (
+          {/* ✅ FIX: type post */}
+          {user.posts.map((post: Post) => (
             <Link
               key={post.id}
               href={`/blog/${post.slug}`}
