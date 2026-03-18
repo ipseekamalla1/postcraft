@@ -5,6 +5,7 @@ import Link from "next/link";
 import { authOptions } from "@/lib/auth";
 import DeleteButton from "@/components/DeleteButton";
 
+// ✅ Define Post type
 type Post = {
   id: string;
   title: string;
@@ -25,7 +26,8 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const user = await prisma.user.findUnique({
+  // ✅ Type the user + posts properly
+  const user: { posts: Post[] } | null = await prisma.user.findUnique({
     where: { email: session.user.email },
     include: {
       posts: {
@@ -34,9 +36,11 @@ export default async function DashboardPage() {
     },
   });
 
-  const posts = user?.posts ?? [];
-  const drafts = posts.filter((p) => p.status === "draft");
-  const published = posts.filter((p) => p.status === "published");
+  const posts: Post[] = user?.posts ?? [];
+
+  // ✅ Now TS knows p is Post
+  const drafts = posts.filter((p: Post) => p.status === "draft");
+  const published = posts.filter((p: Post) => p.status === "published");
 
   return (
     <main className="min-h-screen bg-white dark:bg-gray-950 py-12">
@@ -60,7 +64,7 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        {/* Stats Row */}
+        {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-10">
           {[
             { label: "Total Posts", value: posts.length },
@@ -81,7 +85,7 @@ export default async function DashboardPage() {
           ))}
         </div>
 
-        {/* Empty state */}
+        {/* Empty */}
         {posts.length === 0 && (
           <div className="text-center py-24 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
             <div className="text-5xl mb-4">✍️</div>
@@ -103,12 +107,11 @@ export default async function DashboardPage() {
         {/* Drafts */}
         {drafts.length > 0 && (
           <div className="mb-10">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-yellow-400" />
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Drafts
             </h2>
             <div className="flex flex-col gap-3">
-              {drafts.map((post) => (
+              {drafts.map((post: Post) => (
                 <PostRow key={post.id} post={post} />
               ))}
             </div>
@@ -118,69 +121,40 @@ export default async function DashboardPage() {
         {/* Published */}
         {published.length > 0 && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-400" />
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Published
             </h2>
             <div className="flex flex-col gap-3">
-              {published.map((post) => (
+              {published.map((post: Post) => (
                 <PostRow key={post.id} post={post} />
               ))}
             </div>
           </div>
         )}
-
       </div>
     </main>
   );
 }
 
+// ✅ Typed component
 function PostRow({ post }: { post: Post }) {
   const isDraft = post.status === "draft";
 
   return (
-    <div className="flex items-center justify-between p-5 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-violet-200 dark:hover:border-violet-800 transition-colors">
+    <div className="flex items-center justify-between p-5 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
       <div className="flex-1 min-w-0 mr-4">
-        <div className="flex items-center gap-2 mb-1">
-          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-            isDraft
-              ? "bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300"
-              : "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300"
-          }`}>
-            {isDraft ? "Draft" : "Published"}
-          </span>
-          {post.tone && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900 text-violet-700 dark:text-violet-300 font-medium">
-              {post.tone}
-            </span>
-          )}
-        </div>
         <h3 className="font-semibold text-gray-900 dark:text-white truncate">
           {post.title}
         </h3>
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-          {new Date(post.createdAt).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          })}
-        </p>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-2">
         {!isDraft && (
-          <Link
-            href={`/blog/${post.slug}`}
-            className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-          >
+          <Link href={`/blog/${post.slug}`} className="text-xs">
             View
           </Link>
         )}
-        <Link
-          href={`/generate?edit=${post.id}`}
-          className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-        >
+        <Link href={`/generate?edit=${post.id}`} className="text-xs">
           Edit
         </Link>
         <DeleteButton postId={post.id} />
