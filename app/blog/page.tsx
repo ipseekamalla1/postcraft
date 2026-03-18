@@ -2,8 +2,25 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import Image from "next/image";
 
+// ✅ Define type for posts
+type PostWithAuthor = {
+  id: string;
+  slug: string;
+  title: string;
+  content: string;
+  coverImage: string | null;
+  tone: string | null;
+  createdAt: Date;
+  author: {
+    name: string | null;
+    image: string | null;
+    username: string | null;
+  };
+};
+
 export default async function BlogPage() {
-  const posts = await prisma.post.findMany({
+  // ✅ Apply type here
+  const posts: PostWithAuthor[] = await prisma.post.findMany({
     where: { status: "published" },
     include: {
       author: {
@@ -46,7 +63,7 @@ export default async function BlogPage() {
 
         {/* Posts grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {posts.map((post) => (
+          {posts.map((post: PostWithAuthor) => (
             <Link
               key={post.id}
               href={`/blog/${post.slug}`}
@@ -66,6 +83,7 @@ export default async function BlogPage() {
                     ✍️
                   </div>
                 )}
+
                 {/* Tone badge */}
                 {post.tone && (
                   <div className="absolute top-3 left-3">
@@ -81,6 +99,7 @@ export default async function BlogPage() {
                 <h2 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
                   {post.title}
                 </h2>
+
                 <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-4">
                   {post.content.slice(0, 120)}...
                 </p>
@@ -100,10 +119,13 @@ export default async function BlogPage() {
                       {post.author.name?.[0] ?? "U"}
                     </div>
                   )}
+
                   <span className="text-xs text-gray-500 dark:text-gray-400">
                     {post.author.name}
                   </span>
+
                   <span className="text-xs text-gray-300 dark:text-gray-700">·</span>
+
                   <span className="text-xs text-gray-400 dark:text-gray-500">
                     {new Date(post.createdAt).toLocaleDateString("en-US", {
                       month: "short",
