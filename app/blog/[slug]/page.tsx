@@ -7,12 +7,16 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+// ✅ FIXED: Proper typing added
 export async function generateStaticParams() {
-  const posts = await prisma.post.findMany({
+  const posts: { slug: string }[] = await prisma.post.findMany({
     where: { status: "published" },
     select: { slug: true },
   });
-  return posts.map((post) => ({ slug: post.slug }));
+
+  return posts.map((post) => ({
+    slug: post.slug,
+  }));
 }
 
 export default async function PostPage({ params }: Props) {
@@ -106,7 +110,7 @@ export default async function PostPage({ params }: Props) {
 
         {/* Content */}
         <div className="prose prose-gray dark:prose-invert max-w-none">
-          {post.content.split("\n").map((paragraph, i) => (
+          {post.content.split("\n").map((paragraph: string, i: number) => (
             paragraph.trim() ? (
               <p
                 key={i}
