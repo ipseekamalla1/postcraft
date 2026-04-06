@@ -18,6 +18,8 @@ export async function generateStaticParams() {
     slug: post.slug,
   }));
 }
+export const revalidate = 60 // seconds
+
 
 export default async function PostPage({ params }: Props) {
   const { slug } = await params;

@@ -17,6 +17,8 @@ type PostWithAuthor = {
     username: string | null;
   };
 };
+export const revalidate = 60 // seconds
+
 
 export default async function BlogPage() {
   // ✅ Apply type here
